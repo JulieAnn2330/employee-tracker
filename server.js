@@ -60,350 +60,386 @@ const inquirer = require('inquirer');
 const fs = require('fs');
 const util = require("util");
 const mysql = require('mysql');
-const Employee = require('../template-engine-employee-summary/Develop/lib/Employee');
+const consoleTable = require('console.table');
 
 
-const writeFileAsync = util.promisify(fs.writeFile);
+// create the connection information for the sql database
+var connection = mysql.createConnection({
+    host: "localhost",
+  
+    // Your port; if not 3306
+    port: 3306,
+  
+    // Your username
+    user: "root",
+  
+    // Your password
+    password: "Tbjs233069$",
+    database: "employee_tracker"
+  });
 
-     await inquirer.prompt([
-          {
-          type: 'list',
-          name: 'action',
-          message: 'What do you want to do?',
-          choices: [
-            'Add department',
-            'Add title',
-            'Add employee',
-            'Delete department',
-            'Delete title',
-            'Delete employee',
-            'Update employee role',
-            'View department budget',
-            'View deparment',
-            'View employee',
-            'View employees by Vice-President',
-            'View title',
-         ]},
-     ])
+// connect to the mysql server and sql database
+connection.connect(function(err) {
+    if (err) throw err;
+    console.log("connected as id " + connection.threadId);
+    // run the start function after the connection is made to prompt the user
+    start();
+  });
 
-     .then((answers) => {
-         action = answers.action;
-     });
-
-     switch (action) {
-         case "Add Department":
-             await inquirer.prompt([       
-         {
-          type: 'input',
-          name: 'department_name',
-          message: 'Please enter the new department name.'
-          },
-             ])
-        .then((answers) => {
-        const department = new Department;
-        (answers.department);
-        department.push(department);
-            })
-
-        case "Add Title":
-           await inquirer.prompt ([
-             {  
-          type: 'input',
-          name: 'title_name', 
-          message: 'Please enter the new title.'
-          },
-        ])
-
-        .then((answers) => {
-            const title = new Title
-            (answers.title);
-            role.push(title);
-        });
-
-        case "Add employee":
-          await inquirer.prompt([
-          {    
-          type: 'input',
-          name: 'employee_first_name',
-          message: 'Please enter the first name of the new employee.'
-          },
-          {
-          type: 'input',
-          name: 'employee_last_name',
-          message: 'Please enter the last name of the new employee.'
-          },
-          {
-            type: 'input',
-            name: 'employee_department',
-            message: 'Please enter the department of the new employee.'
-          },
-          {
-            type: 'input',
-            name: 'employee_title',
-            message: 'Please enter the title of the new employee.'
-          }
-        ])
-
-        .then((answers) => {
-
-            const employee = new Employee
-            (answers.first_name, answers.last_name, answers.employee_department, answers.employee.title);
-
-            employee.push(employee);
-        });
-
-        case "View Department":
-            await inquirer.prompt([
-          {
-          type: 'list',
-          name: 'department_view',
-          message: 'Which department do you want to view?',
-          choices: [
-            'All', 
-            'Art & Editorial',
-            'Executive',
-            'Human Resources',
-            'Marketihg',
-            'Sales',
-            'Software',
-         ]},
-    ])
-         //.then
-
-         case "View Title":
-             await inquirer.prompt([
-         {
+  function start() {
+    inquirer
+      .prompt({
         type: 'list',
-          name: 'title_view',
-          message: 'Which title do you want to view?',
-          choices: [
-            'All', 
-            'Associate',
-            'Editor',
-            'Graphic Artist',
-            'Manager',
-            'Sales Rep',
-            'Vice-President',
-            'Web Developer',
-         ]},
+        name: 'action',
+        message: 'What do you want to do?',
+        choices: [
+          'Add department',
+          'Add title',
+          'Add employee',
+          'Delete department',
+          'Delete role',
+          'Delete employee',
+          'Update employee title',
+          'View department budget',
+          'View department',
+          'View employee',
+          'View employees by Vice-President',
+          'View title',
+          'Exit',
+        ]
+      })
+      .then(function(answer) {
+        // based on their answer, either call the bid or the post functions
+        if (answer.action === 'Add department') {
+          addDepartment();
+        } else if(answer.action === "Add title") {
+          addTitle();
+        } else if(answer.action === "Add employee") {
+            addEmployee();
+        } else if(answer.action === "Delete department") {
+            deleteDepartment();
+        } else if(answer.action === "Delete role") {
+            deleteRole();
+        } else if(answer.action === "Delete employee") {
+            deleteEmployee();
+        } else if(answer.action === "Update employee title") {
+            updateEmployeeTitle();
+        } else if(answer.action === "View department budget") {
+            viewDepartmentBudget();
+        } else if(answer.action === "View department") {
+            viewDepartment();
+        } else if(answer.action === "View employee") {
+            viewEmployee();
+        } else if(answer.action === "View employees by Vice-President") {
+            viewEmployeesByVP();
+        } else if(answer.action === "View title") {
+            viewTitle();
+        } else if(answer.action === "Exit") {
+          connection.end();
+        }
+      });
+  }
+
+  function addDepartment() {
+    inquirer.prompt([       
+        {
+         type: 'input',
+         name: 'department_name',
+         message: 'Please enter the new department name.'
+         }
         ])
-
-        //.then
-
-        case "View Employee":
-            await inquirer.prompt([
+         .then(function(answer) {
+            // when finished prompting, insert a new item into the db with that info
+            connection.query(
+              "INSERT INTO department SET ?",
+              {
+                department_name: answer.department_name,
+              },
+              function(err) {
+                if (err) throw err;
+                console.log("Your department was created successfully!");
+                start();
+              });
+            })
+          }
+  
+    function addTitle() {
+    inquirer.prompt([       
+        {
+            type: 'input',
+            name: 'title_name', 
+            message: 'Please enter the new title.'
+         },
          {
-            type: 'list',
-              name: 'employee_view',
-              message: 'Which employee do you want to view?',
-              choices: [
-                'All', 
-                'Scott Adams',
-                'Rob Andrews',
-                'Zoe Baker',
-                'Troy Batson',
-                'Joseph Daniels',
-                'Natalie Ericsson',
-                'Matt Evans',
-                'Rachel Greer',
-                'Olivia Johnson',
-                'Sarah Jones',
-                'Julie Schaub',
-                'Patrick Sellen',
-                'Paige Sellen',
-                'John Smith',
-            ]},
-        ])
-
-        //.then
-
-        
-        case "Update Employee":
-            await inquirer.prompt([
-          {
-          type: 'list',
-          message: 'Which employee do you want to update?',
-          name: 'employee_update',
-          choices: [
-            'Scott Adams',
-            'Rob Andrews',
-            'Zoe Baker',
-            'Troy Batson',
-            'Joseph Daniels',
-            'Natalie Ericsson',
-            'Matt Evans',
-            'Rachel Greer',
-            'Olivia Johnson',
-            'Sarah Jones',
-            'Julie Schaub',
-            'Patrick Sellen',
-            'Paige Sellen',
-            'John Smith',
-        ]},
-           {
-          type: 'list',
-          name: 'choose_update',
-          message: 'What about this employee do you want to update?',
-          choices: [
-            'Title',
-            'Department',
-            'Salary',
-            'Vice-President',
-          ]},
-        ])
-
-switch (choose_update) {
-    case "Title Update":
-        await inquirer.prompt([
-          {
-            type: 'list',
-            name: 'title_update',
-            message: 'What title do you want this employee updated to?',
-            choices: [
-                'Associate',
-                'Editor',
-                'Graphic Artist',
-                'Manager',
-                'Sales Rep',
-                'Vice-President',
-                'Web Developer',
-          ]},
-      ])
-
-    .then((answers) => {
-        const title_update = new Title_Update
-        (answers.title_update)
-        role.push(title_update);
-    });
-
-    case "Department Update":
-        await inquirer.prompt([
-          {
-            type: 'list',
-            name: 'department_update',
-            message: 'What department do you want this employee updated to?',
-            choices: [
-                'Art & Editorial',
-                'Executive',
-                'Human Resources',
-                'Marketihg',
-                'Sales',
-                'Software',
-            ]},
-        ])
-
-        //.then
-
-        case "VP Update":
-            await inquirer.prompt([          {
-            type: 'list',
-            name: 'vp_update',
-            message: 'What Vice-President do you want this employee updated to?',
-            choices: [
-                'Troy Batson',
-                'Julie Schaub',
-            ]},
-        ])
-
-        //.then
-
-
-        case "VP View":
-            await inquirer.prompt([
-          {
-            type: 'list',
-            name: 'vp_view',
-            message: 'Which Vice-President to you want to view?',
-            choices: [
-              'All',
-              'Troy Batson',
-              'Julie Schaub',
-            ]},
-        ])
-
-        //.then
-
-        case "Delete Employee":
-await inquirer.prompt([
-          {
-          type: 'list',
-          message: 'Which employee do you want to delete?',
-          name: 'employee_delete',
-          choices: [
-            'Scott Adams',
-            'Rob Andrews',
-            'Zoe Baker',
-            'Troy Batson',
-            'Joseph Daniels',
-            'Natalie Ericsson',
-            'Matt Evans',
-            'Rachel Greer',
-            'Olivia Johnson',
-            'Sarah Jones',
-            'Julie Schaub',
-            'Patrick Sellen',
-            'Paige Sellen',
-            'John Smith',
-        ]},
-    ])
-
-    //.then
-
-    case "Delete Title":
-
-    await inquirer.prompt([
-          {
-          type: 'list',
-          name: 'title_delete',
-          message: 'Which title do you want to delete?',
-          choices: [
-            'Associate',
-            'Editor',
-            'Graphic Artist',
-            'Manager',
-            'Sales Rep',
-            'Vice-President',
-            'Web Developer',
-        ]},
-    ])
-
-    //.then
-
-    case "Delete Department":
-        await inquirer.prompt([
+            type: 'input',
+            name: 'title_salary', 
+            message: 'Please enter the associated salary.'
+         },
          {
-            type: 'list',
-            name: 'department_delete',
-            message: 'Which department do you want to delete?',
-            choices: [
-              'Art & Editorial',
-              'Executive',
-              'Human Resources',
-              'Marketihg',
-              'Sales',
-              'Software',
+            type: 'input',
+            name: 'title_department', 
+            message: 'Please enter the associated department id.'
+         },
+         {
+            type: 'input',
+            name: 'title_vp', 
+            message: 'Please enter the associated Vice President name.'
+         }
+        ])
+         .then(function(answer) {
+            // when finished prompting, insert a new item into the db with that info
+            connection.query(
+              "INSERT INTO role SET ?",
+              {
+                title: answer.title_name,
+                salary: answer.title_salary,
+                department_id: answer.title_department,
+                manager_name: answer.title_vp
+             },
+              function(err) {
+                if (err) throw err;
+                console.log("Your title was created successfully!");
+                start();
+              });
+          })
+       }
+
+       function addEmployee() {
+        inquirer.prompt([       
+            {    
+                type: 'input',
+                name: 'employee_first_name',
+                message: 'Please enter the first name of the new employee.'
+                },
+                {
+                type: 'input',
+                name: 'employee_last_name',
+                message: 'Please enter the last name of the new employee.'
+                },
+                {
+                  type: 'input',
+                  name: 'employee_role_id',
+                  message: 'Please enter the role id of the new employee.'
+                },
+                {
+                  type: 'input',
+                  name: 'employee_vp_id',
+                  message: 'Please enter the Vice-President id of the new employee.'
+                },
+                {
+                  type: 'input',
+                  name: 'employee_vp',
+                  message: 'Please enter the Vice-President of the new employee.'
+                  },
+            ])
+             .then(function(answer) {
+                // when finished prompting, insert a new item into the db with that info
+                connection.query(
+                  "INSERT INTO employee SET ?",
+                  {
+                    first_name: answer.employee_first_name,
+                    last_name: answer.employee_last_name,
+                    role_id: answer.employee_role_id,
+                    manager_name: answer.employee_vp
+                  },
+                  function(err) {
+                    if (err) throw err;
+                    console.log("Your employee was created successfully!");
+                    start();
+                  });
+              })
+           }
+
+    function deleteDepartment() {
+        inquirer.prompt([       
+            {
+                type: 'list',
+                name: 'department_delete',
+                message: 'Which department do you want to delete?',
+                choices: [
+                  'Administration',
+                  'Art & Editorial',
+                  'Executive',
+                  'Human Resources',
+                  'Marketihg',
+                  'Sales',
+                  'Software',
             ]} 
-   ])
-};
-    
-
-
-                 
-
-// function to initialize program
-async function init() {
-    try {
-         const answers = await promptUser();
-
-         const readMe = generateREADME(answers);
-
-         await writeFileAsync('README.md', readMe);
-         console.log('Successfully written to README.md');
-         
-    } catch (err) {
-         console.log(err);
+        ])
+        .then(function(answer) {
+         // when finished prompting, insert a new item into the db with that info
+            connection.query(
+            "Delete From department where ?",
+            {
+             department_name: answer.department_delete
+            },
+            function(err) {
+            if (err) throw err;
+            console.log("Your department was deleted successfully!");
+            start();
+          });
+        })
     }
-}}
 
-// function call to initialize program
-init(); 
+    function deleteRole() {
+        inquirer.prompt([       
+            {
+                type: 'list',
+                name: 'role_delete',
+                message: 'Which role do you want to delete?',
+                choices: [
+                    'Associate',
+                    'Editor',
+                    'Graphic Artist',
+                    'Manager',
+                    'Sales Rep',
+                    'Vice-President',
+                    'Web Developer',
+            ]} 
+        ])
+        .then(function(answer) {
+         // when finished prompting, insert a new item into the db with that info
+            connection.query(
+            "Delete From role where ?",
+            {
+             title: answer.role_delete
+            },
+            function(err) {
+            if (err) throw err;
+            console.log("Your role was deleted successfully!");
+            start();
+          });
+        })
+    }
+
+    function deleteEmployee() {
+        inquirer.prompt([       
+            {
+                type: 'input',
+                name: 'delete_employee_first', 
+                message: 'Please enter the first name of the employee you want to delete.'
+             }
+           ])
+             .then(function(answer) {
+                 connection.query(
+                  "Delete from employee where ?",
+                  {
+                    first_name: answer.delete_employee_first
+                  },
+                  function(err) {
+                    if (err) throw err;
+                    console.log("Your employee was deleted successfully!");
+                    start();
+                  });
+              })
+           }
+
+    function updateEmployeeTitle() {
+        inquirer.prompt([  
+            {
+                type: 'input',
+                name: 'employee_role_update', 
+                message: 'Please enter the updated role id for the employee.'
+             },     
+            {
+                type: 'input',
+                name: 'employee_update', 
+                message: 'Please enter the employee id whose role you want to update.'
+             },
+          ])
+             .then(function(answer) {
+                // when finished prompting, insert a new item into the db with that info
+                connection.query(
+                  "UPDATE employee SET ? WHERE ?",
+                  [
+                    {
+                        role_id: answer.employee_role_update
+                        },
+                    {
+                    id: answer.employee_udpate,
+                    },
+                  ],
+                  function(err, res) {
+                    if (err) throw err;
+                    console.log(res.affectedRows + "role id updated!");
+                    start();
+                  });
+              })
+           }
+
+           function viewDepartmentBudget() {
+            inquirer.prompt([       
+                {
+                    type: 'input',
+                    name: 'department_budget', 
+                    message: 'Please enter the department whose budget you want to view.'
+                 }
+                ])
+                 .then(function(answer) {
+                    // when finished prompting, insert a new item into the db with that info
+                    connection.query(
+                      "select sum(salary) from role ? where ?",
+                      {
+                        salary: answer.department_budget,
+                        },
+                    function(err) {
+                        if (err) throw err;
+                        console.log("Your employee was updated successfully!");
+                        start();
+                      });
+                  })
+               }
+
+           function viewDepartment() {
+            console.log("Selecting all departments...\n");
+            connection.query("SELECT * FROM department", function(err, res) {
+              if (err) throw err;
+              // Log all results of the SELECT statement
+              console.log(res);
+              start();
+            });
+          }
+
+          function viewEmployee() {
+            console.log("Selecting all employees...\n");
+            connection.query("SELECT * FROM employee", function(err, res) {
+              if (err) throw err;
+              // Log all results of the SELECT statement
+              console.log(res);
+              start();
+            });
+          }
+
+          function viewEmployeesByVP() {
+            inquirer.prompt([       
+                {
+                    type: 'input',
+                    name: 'employee_vp', 
+                    message: 'Please enter the name of the Vice President you want to view.'
+                 },
+                ])
+                 .then(function(answer) {
+                   connection.query(
+                    "select * from employee where ?" ,
+                     {
+                        manager_name: answer.employee_vp
+                      },
+                      function(err, res) {
+                        if (err) throw err;
+                        console.log(res);
+                        start();
+                      });
+                  })
+               }
+          
+          function viewTitle() {
+            console.log("Selecting all roles...\n");
+            connection.query("SELECT * FROM role", function(err, res) {
+              if (err) throw err;
+              // Log all results of the SELECT statement
+              console.log(res);
+              start();
+            });
+          }
+
+     

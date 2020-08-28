@@ -31,5 +31,7 @@ order by employee.first_name;
 
 ;
 
+/*Update employee role*/
+UPDATE employee SET role_id = 8 WHERE id = 17;
 
 
