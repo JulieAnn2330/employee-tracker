@@ -94,17 +94,17 @@ connection.connect(function(err) {
         message: 'What do you want to do?',
         choices: [
           'Add department',
-          'Add title',
+          'Add role',
           'Add employee',
           'Delete department',
           'Delete role',
           'Delete employee',
-          'Update employee title',
+          'Update employee role',
           'View department budget',
-          'View department',
-          'View employee',
+          'View departments',
+          'View employees',
           'View employees by Vice-President',
-          'View title',
+          'View roles',
           'Exit',
         ]
       })
@@ -112,8 +112,8 @@ connection.connect(function(err) {
         // based on their answer, either call the bid or the post functions
         if (answer.action === 'Add department') {
           addDepartment();
-        } else if(answer.action === "Add title") {
-          addTitle();
+        } else if(answer.action === "Add role") {
+          addRole()
         } else if(answer.action === "Add employee") {
             addEmployee();
         } else if(answer.action === "Delete department") {
@@ -122,18 +122,18 @@ connection.connect(function(err) {
             deleteRole();
         } else if(answer.action === "Delete employee") {
             deleteEmployee();
-        } else if(answer.action === "Update employee title") {
-            updateEmployeeTitle();
+        } else if(answer.action === "Update employee role") {
+            updateEmployeeRole();
         } else if(answer.action === "View department budget") {
             viewDepartmentBudget();
         } else if(answer.action === "View department") {
-            viewDepartment();
+            viewDepartments();
         } else if(answer.action === "View employee") {
-            viewEmployee();
+            viewEmployees();
         } else if(answer.action === "View employees by Vice-President") {
             viewEmployeesByVP();
-        } else if(answer.action === "View title") {
-            viewTitle();
+        } else if(answer.action === "View roles") {
+            viewRoles();
         } else if(answer.action === "Exit") {
           connection.end();
         }
@@ -152,37 +152,43 @@ connection.connect(function(err) {
             // when finished prompting, insert a new item into the db with that info
             connection.query(
               "INSERT INTO department SET ?",
-              {
+             ({
                 department_name: answer.department_name,
-              },
-              function(err) {
+              }),
+              function(err, res) {
                 if (err) throw err;
+                console.table(res);
                 console.log("Your department was created successfully!");
+                viewDepartments();
                 start();
               });
             })
           }
   
-    function addTitle() {
+    function addRole() {
     inquirer.prompt([       
         {
             type: 'input',
-            name: 'title_name', 
-            message: 'Please enter the new title.'
+            name: 'role_name', 
+            message: 'Please enter the new role.'
          },
          {
             type: 'input',
-            name: 'title_salary', 
+            name: 'role_salary', 
             message: 'Please enter the associated salary.'
          },
          {
             type: 'input',
-            name: 'title_department', 
+            name: 'role_department', 
             message: 'Please enter the associated department id.'
          },
+         {  type: "input",
+            name: "role_id_vp",
+            message: 'Please enter the associated Vice President id.'
+        },
          {
             type: 'input',
-            name: 'title_vp', 
+            name: 'role_vp', 
             message: 'Please enter the associated Vice President name.'
          }
         ])
@@ -191,19 +197,24 @@ connection.connect(function(err) {
             connection.query(
               "INSERT INTO role SET ?",
               {
-                title: answer.title_name,
-                salary: answer.title_salary,
-                department_id: answer.title_department,
-                manager_name: answer.title_vp
-             },
-              function(err) {
+                role: answer.role_name,
+                salary: answer.role_salary,
+                department_id: answer.role_department,
+                manager_id: answer.role_id_vp,
+                manager_name: answer.role_vp
+              },
+              function(err, res) {
                 if (err) throw err;
-                console.log("Your title was created successfully!");
+                console.table(res);
+                console.log("Your role was created successfully!");
+                viewRoles();
                 start();
-              });
-          })
-       }
+              })
+         })
+        }
+          
 
+                
        function addEmployee() {
         inquirer.prompt([       
             {    
@@ -236,15 +247,17 @@ connection.connect(function(err) {
                 // when finished prompting, insert a new item into the db with that info
                 connection.query(
                   "INSERT INTO employee SET ?",
-                  {
+                  ({
                     first_name: answer.employee_first_name,
                     last_name: answer.employee_last_name,
                     role_id: answer.employee_role_id,
+                    manager_id: answer.employee_vp_id,
                     manager_name: answer.employee_vp
-                  },
-                  function(err) {
+                  }),
+                  function(err, res) {
                     if (err) throw err;
                     console.log("Your employee was created successfully!");
+                    viewEmployees();
                     start();
                   });
               })
@@ -253,18 +266,10 @@ connection.connect(function(err) {
     function deleteDepartment() {
         inquirer.prompt([       
             {
-                type: 'list',
+                type: 'input',
                 name: 'department_delete',
                 message: 'Which department do you want to delete?',
-                choices: [
-                  'Administration',
-                  'Art & Editorial',
-                  'Executive',
-                  'Human Resources',
-                  'Marketihg',
-                  'Sales',
-                  'Software',
-            ]} 
+            }
         ])
         .then(function(answer) {
          // when finished prompting, insert a new item into the db with that info
@@ -276,6 +281,7 @@ connection.connect(function(err) {
             function(err) {
             if (err) throw err;
             console.log("Your department was deleted successfully!");
+            viewDepartments();
             start();
           });
         })
@@ -284,29 +290,23 @@ connection.connect(function(err) {
     function deleteRole() {
         inquirer.prompt([       
             {
-                type: 'list',
+                type: 'input',
                 name: 'role_delete',
-                message: 'Which role do you want to delete?',
-                choices: [
-                    'Associate',
-                    'Editor',
-                    'Graphic Artist',
-                    'Manager',
-                    'Sales Rep',
-                    'Vice-President',
-                    'Web Developer',
-            ]} 
+                message: 'What is the id of the role you want to delete?',
+            } 
         ])
         .then(function(answer) {
          // when finished prompting, insert a new item into the db with that info
             connection.query(
             "Delete From role where ?",
             {
-             title: answer.role_delete
+            role_id: answer.role_delete
             },
-            function(err) {
+            function(err, res) {
             if (err) throw err;
-            console.log("Your role was deleted successfully!");
+            console.table(res);
+            console.log('Your role was deleted successfully!')
+            viewRoles();
             start();
           });
         })
@@ -316,25 +316,26 @@ connection.connect(function(err) {
         inquirer.prompt([       
             {
                 type: 'input',
-                name: 'delete_employee_first', 
-                message: 'Please enter the first name of the employee you want to delete.'
+                name: 'delete_employee_id', 
+                message: 'Please enter the id of the employee you want to delete.'
              }
            ])
              .then(function(answer) {
                  connection.query(
                   "Delete from employee where ?",
-                  {
-                    first_name: answer.delete_employee_first
-                  },
-                  function(err) {
+                 ({
+                    id: answer.delete_employee_id
+                  }),
+                  function(err, res) {
                     if (err) throw err;
-                    console.log("Your employee was deleted successfully!");
+                    console.table([res]);
+                    viewEmployees();
                     start();
                   });
               })
            }
 
-    function updateEmployeeTitle() {
+    function updateEmployeeRole() {
         inquirer.prompt([  
             {
                 type: 'input',
@@ -350,18 +351,19 @@ connection.connect(function(err) {
              .then(function(answer) {
                 // when finished prompting, insert a new item into the db with that info
                 connection.query(
-                  "UPDATE employee SET ? WHERE ?",
-                  [
+                  "UPDATE employee SET ? WHERE  ?",
+                  ([
                     {
-                        role_id: answer.employee_role_update
-                        },
+                    role_id: answer.employee_role_update
+                    },
                     {
                     id: answer.employee_udpate,
                     },
-                  ],
+                  ]),
                   function(err, res) {
                     if (err) throw err;
-                    console.log(res.affectedRows + "role id updated!");
+                    console.table(res);
+                    viewEmployees();
                     start();
                   });
               })
@@ -379,33 +381,34 @@ connection.connect(function(err) {
                     // when finished prompting, insert a new item into the db with that info
                     connection.query(
                       "select sum(salary) from role ? where ?",
-                      {
+                      ({
                         salary: answer.department_budget,
-                        },
+                        }),
                     function(err) {
                         if (err) throw err;
                         console.log("Your employee was updated successfully!");
+                        viewDepartment();
                         start();
                       });
                   })
                }
 
-           function viewDepartment() {
+           function viewDepartments() {
             console.log("Selecting all departments...\n");
             connection.query("SELECT * FROM department", function(err, res) {
               if (err) throw err;
               // Log all results of the SELECT statement
-              console.log(res);
+              console.table(res);
               start();
             });
           }
 
-          function viewEmployee() {
+          function viewEmployees() {
             console.log("Selecting all employees...\n");
             connection.query("SELECT * FROM employee", function(err, res) {
               if (err) throw err;
               // Log all results of the SELECT statement
-              console.log(res);
+              console.table(res);
               start();
             });
           }
@@ -419,25 +422,26 @@ connection.connect(function(err) {
                  },
                 ])
                  .then(function(answer) {
+                     console.log("Selecting chosen Vice President")
                    connection.query(
                     "select * from employee where ?" ,
-                     {
+                     ({
                         manager_name: answer.employee_vp
-                      },
+                      }),
                       function(err, res) {
                         if (err) throw err;
-                        console.log(res);
+                        console.table(res);
                         start();
                       });
                   })
                }
           
-          function viewTitle() {
+          function viewRoles() {
             console.log("Selecting all roles...\n");
             connection.query("SELECT * FROM role", function(err, res) {
               if (err) throw err;
               // Log all results of the SELECT statement
-              console.log(res);
+              console.table(res);
               start();
             });
           }

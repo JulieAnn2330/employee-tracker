@@ -29,7 +29,7 @@ inner join employee on employee.role_id = role.role_id
 inner join department on department.department_id = role.department_id
 order by employee.first_name;
 
-;
+
 
 /*Update employee role*/
 UPDATE employee SET role_id = 8 WHERE id = 17;
