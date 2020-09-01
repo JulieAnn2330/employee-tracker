@@ -101,7 +101,6 @@ connection.connect(function(err) {
           'Delete employee',
           'Update employee role',
           'Update employee Vice President',
-          'View department budget',
           'View departments',
           'View employees',
           'View employees by department',
@@ -128,8 +127,6 @@ connection.connect(function(err) {
             updateEmployeeRole();
         } else if(answer.action === "Update employee Vice President") {
             updateEmployeeVicePresident();
-        } else if(answer.action === "View department budget") {
-            viewDepartmentBudget();
         } else if(answer.action === "View departments") {
             viewDepartments();
         } else if(answer.action === "View employees") {
@@ -158,15 +155,14 @@ connection.connect(function(err) {
             // when finished prompting, insert a new item into the db with that info
             connection.query(
               "INSERT INTO department SET ?",
-             ({
-                department_name: answer.department_name,
-              }),
+             {
+                DepartmentName: answer.department_name,
+              },
               function(err, res) {
                 if (err) throw err;
                 console.table(res);
                 console.log("Your department was created successfully!");
                 viewDepartments();
-                start();
               });
             })
           }
@@ -193,19 +189,19 @@ connection.connect(function(err) {
             // when finished prompting, insert a new item into the db with that info
             connection.query(
               "Insert into role set ?",
-              {role: answer.role_name, salary: answer.role_salary, department_id:answer.role_department},
-              function(err, res) {
+              {
+               Role: answer.role_name, 
+               Salary: answer.role_salary, 
+               DepartmentID:answer.role_department
+              },
+              function(err) {
                 if (err) throw err;
-                console.table(res);
                 console.log("Your role was created successfully!");
                 viewRoles();
-                start();
               })
          })
         }
           
-
-                
        function addEmployee() {
         inquirer.prompt([       
             {    
@@ -237,17 +233,16 @@ connection.connect(function(err) {
                 // when finished prompting, insert a new item into the db with that info
                 connection.query(
                   "INSERT INTO employee SET ?",
-                  ({
-                    first_name: answer.employee_first_name,
-                    last_name: answer.employee_last_name,
-                    role_id: answer.employee_role_id,
-                    manager_id: answer.employee_vp_id,
-                  }),
-                  function(err, res) {
+                  {
+                    FirstName: answer.employee_first_name,
+                    LastName: answer.employee_last_name,
+                    RoleID: answer.employee_role_id,
+                    ManagerID: answer.employee_vp_id,
+                  },
+                  function(err) {
                     if (err) throw err;
                     console.log("Your employee was created successfully!");
                     viewEmployees();
-                    start();
                   });
               })
            }
@@ -265,14 +260,13 @@ connection.connect(function(err) {
             connection.query(
             "Delete From department where ?",
             {
-             department_name: answer.department_delete
+             DepartmentName: answer.department_delete
             },
             function(err) {
             if (err) throw err;
             console.log("Your department was deleted successfully!");
             viewDepartments();
-            start();
-          });
+            });
         })
     }
 
@@ -289,15 +283,13 @@ connection.connect(function(err) {
             connection.query(
             "Delete From role where ?",
             {
-            role: answer.role_delete
+            Role: answer.role_delete
             },
-            function(err, res) {
+            function(err) {
             if (err) throw err;
-            console.table(res);
             console.log('Your role was deleted successfully!')
             viewRoles();
-            start();
-          });
+            });
         })
     }
 
@@ -316,13 +308,11 @@ connection.connect(function(err) {
            ])
              .then(function(answer) {
                  connection.query(
-                  'Delete from employee where first_name = ? and last_name = ?',
+                  'Delete from employee where FirstName = ? and LastName = ?',
                   [answer.delete_employee_first, answer.delete_employee_last],  
-                  function(err, res) {
+                  function(err) {
                     if (err) throw err;
-                    console.table([res]);
                     viewEmployees();
-                    start();
                   });
               })
            }
@@ -343,13 +333,11 @@ connection.connect(function(err) {
              .then(function(answer) {
                 // when finished prompting, insert a new item into the db with that info
                 connection.query(
-                  'Update employee set role_id = ? where id = ?',
+                  'Update employee set RoleID = ? where ID = ?',
                   [answer.employee_role_update, answer.employee_update],  
-                function(err, res) {
+                function(err) {
                     if (err) throw err;
-                    console.table(res);
                     viewEmployees();
-                    start();
                   });
               })
            }
@@ -370,49 +358,18 @@ connection.connect(function(err) {
                  .then(function(answer) {
                     // when finished prompting, insert a new item into the db with that info
                     connection.query(
-                      'Update employee set manager_id = ? where id = ?',
+                      'Update employee set ManagerID = ? where ID = ?',
                       [answer.vp_update, answer.employee_vp_update],  
-                    function(err, res) {
+                    function(err) {
                         if (err) throw err;
-                        console.table(res);
                         viewEmployees();
-                        start();
                       });
                   })
                }
 
-           function viewDepartmentBudget() {
-            inquirer.prompt([       
-                {
-                    type: 'input',
-                    name: 'department_budget', 
-                    message: 'Please enter the department id whose budget you want to view.'
-                 }
-                ])
-                .then(function(answer) {
-                  var query = "SELECT sum(salary) ";
-                  query += "FROM role INNER JOIN employee ON (employee.role_id = role.role_id AND employee.department_id ";
-                  query += "= role.department_id) WHERE (role.salary = ? )";
-            
-                  connection.query(query, {salary: answer.department.budget}, function(err, res) {
-                    console.log("Here is your department budget!");
-                    for (var i = 0; i < res.length; i++) {
-                      console.log(
-                        i+1 + ".) " +
-                          "Department: " +
-                          res[i].department_name +
-                          " Budget: " +
-                          res[i].salary 
-                          );
-                    }
-                          start();
-                      });
-                  })
-               }
-
-               function viewDepartments() {
+            function viewDepartments() {
                 console.log("Selecting all departments...\n");
-                connection.query("SELECT * FROM department", function(err, res) {
+                connection.query("SELECT * FROM Department", function(err, res) {
                   if (err) throw err;
                   // Log all results of the SELECT statement
                   console.table(res);
@@ -422,7 +379,7 @@ connection.connect(function(err) {
 
           function viewEmployees() {
             console.log("Selecting all employees...\n");
-            connection.query("SELECT employee.first_name, employee.last_name, role.role, role.salary, department.department_name, employee.manager_id from role inner join employee on employee.role_id = role.role_id inner join department on department.department_id = role.department_id order by employee.first_name", function(err, res) {
+            connection.query("SELECT employee.FirstName, employee.LastName, role.Role, role.Salary, department.DepartmentName, employee.ManagerID from role inner join employee on employee.RoleID = role.RoleID inner join department on department.DepartmentID = role.DepartmentID order by employee.FirstName", function(err, res) {
               if (err) throw err;
               // Log all results of the SELECT statement
               console.table(res);
@@ -433,25 +390,15 @@ connection.connect(function(err) {
           function viewEmployeesByDepartment() {
             inquirer.prompt([  
               {
-                type: 'list',
+                type: 'input',
                 name: 'employee_department_view', 
-                message: 'Please enter the department you want to view.', 
-                choices: [
-                  'Administration',
-                  'Art & Editorial',
-                  'Executive',
-                  'Human Resources',
-                  'IT',
-                  'Marketing',
-                  'Sales',
-                  'Software'
-                ]
-             }    
+                message: 'Please enter the name of the department you want to view.', 
+              }  
              ])
              .then(function(answer) {
             console.log("Selecting department...\n");
             connection.query(
-              "SELECT employee.first_name, employee.last_name, role.role, role.salary, department.department_name from role inner join employee on employee.role_id = role.role_id inner join department on department.department_id = role.department_id where department_name = ?",
+              "SELECT employee.FirstName, employee.LastName, role.Role, role.Salary, department.DepartmentName from role inner join employee on employee.RoleID = role.RoleID inner join department on department.DepartmentID = role.DepartmentID where DepartmentName = ?",
             [answer.employee_department_view],  
             function(err, res) {
                 if (err) throw err;
@@ -477,7 +424,7 @@ connection.connect(function(err) {
                  .then(function(answer) {
                      console.log("Selecting chosen Vice President")
                    connection.query(
-                    "select * from employee where manager_id = ?",
+                    "select * from employee where ManagerID = ?",
                       [answer.employee_vp],
                       function(err, res) {
                         if (err) throw err;
@@ -491,7 +438,6 @@ connection.connect(function(err) {
             console.log("Selecting all roles...\n");
             connection.query("SELECT * FROM role", function(err, res) {
               if (err) throw err;
-              // Log all results of the SELECT statement
               console.table(res);
               start();
             });
