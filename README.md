@@ -34,6 +34,7 @@
 
 <h3 id='techology'>Technologies Used</h3>
 <p>This project incoporates the following tecnologies:<br>
+    JavaScript, node.js, MySQL
 </p><br>
 <a href="#top" id="start">(Back to Top of Page)</a><br>
 <br>
