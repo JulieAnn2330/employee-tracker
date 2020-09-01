@@ -100,9 +100,11 @@ connection.connect(function(err) {
           'Delete role',
           'Delete employee',
           'Update employee role',
+          'Update employee Vice President',
           'View department budget',
           'View departments',
           'View employees',
+          'View employees by department',
           'View employees by Vice-President',
           'View roles',
           'Exit',
@@ -124,15 +126,19 @@ connection.connect(function(err) {
             deleteEmployee();
         } else if(answer.action === "Update employee role") {
             updateEmployeeRole();
+        } else if(answer.action === "Update employee Vice President") {
+            updateEmployeeVicePresident();
         } else if(answer.action === "View department budget") {
             viewDepartmentBudget();
-        } else if(answer.action === "View department") {
+        } else if(answer.action === "View departments") {
             viewDepartments();
-        } else if(answer.action === "View employee") {
+        } else if(answer.action === "View employees") {
             viewEmployees();
+        } else if(answer.action === "View employees by department") {
+            viewEmployeesByDepartment();
         } else if(answer.action === "View employees by Vice-President") {
             viewEmployeesByVP();
-        } else if(answer.action === "View roles") {
+          } else if(answer.action === "View roles") {
             viewRoles();
         } else if(answer.action === "Exit") {
           connection.end();
@@ -166,7 +172,7 @@ connection.connect(function(err) {
           }
   
     function addRole() {
-    inquirer.prompt([       
+      inquirer.prompt([       
         {
             type: 'input',
             name: 'role_name', 
@@ -180,29 +186,14 @@ connection.connect(function(err) {
          {
             type: 'input',
             name: 'role_department', 
-            message: 'Please enter the associated department id.'
-         },
-         {  type: "input",
-            name: "role_id_vp",
-            message: 'Please enter the associated Vice President id.'
-        },
-         {
-            type: 'input',
-            name: 'role_vp', 
-            message: 'Please enter the associated Vice President name.'
-         }
-        ])
+            message: 'Please enter the department id this role is a part of.',
+          },
+         ])
          .then(function(answer) {
             // when finished prompting, insert a new item into the db with that info
             connection.query(
-              "INSERT INTO role SET ?",
-              {
-                role: answer.role_name,
-                salary: answer.role_salary,
-                department_id: answer.role_department,
-                manager_id: answer.role_id_vp,
-                manager_name: answer.role_vp
-              },
+              "Insert into role set ?",
+              {role: answer.role_name, salary: answer.role_salary, department_id:answer.role_department},
               function(err, res) {
                 if (err) throw err;
                 console.table(res);
@@ -233,16 +224,15 @@ connection.connect(function(err) {
                   message: 'Please enter the role id of the new employee.'
                 },
                 {
-                  type: 'input',
+                  type: 'list',
                   name: 'employee_vp_id',
-                  message: 'Please enter the Vice-President id of the new employee.'
-                },
-                {
-                  type: 'input',
-                  name: 'employee_vp',
-                  message: 'Please enter the Vice-President of the new employee.'
-                  },
-            ])
+                  message: "Please choose the new employee's Vice President, where Julie Schaub = 1 and Troy Batson = 2.",
+                  choices: [
+                    '1',
+                    '2'
+                  ]
+                }
+               ])
              .then(function(answer) {
                 // when finished prompting, insert a new item into the db with that info
                 connection.query(
@@ -252,7 +242,6 @@ connection.connect(function(err) {
                     last_name: answer.employee_last_name,
                     role_id: answer.employee_role_id,
                     manager_id: answer.employee_vp_id,
-                    manager_name: answer.employee_vp
                   }),
                   function(err, res) {
                     if (err) throw err;
@@ -292,7 +281,7 @@ connection.connect(function(err) {
             {
                 type: 'input',
                 name: 'role_delete',
-                message: 'What is the id of the role you want to delete?',
+                message: 'What is the name of the role you want to delete?',
             } 
         ])
         .then(function(answer) {
@@ -300,7 +289,7 @@ connection.connect(function(err) {
             connection.query(
             "Delete From role where ?",
             {
-            role_id: answer.role_delete
+            role: answer.role_delete
             },
             function(err, res) {
             if (err) throw err;
@@ -316,16 +305,19 @@ connection.connect(function(err) {
         inquirer.prompt([       
             {
                 type: 'input',
-                name: 'delete_employee_id', 
-                message: 'Please enter the id of the employee you want to delete.'
-             }
+                name: 'delete_employee_first', 
+                message: 'Please enter the first name of the employee you want to delete.',
+             },
+             {
+              type: 'input',
+              name: 'delete_employee_last', 
+              message: 'Please enter the last name of the employee you want to delete.',
+           }
            ])
              .then(function(answer) {
                  connection.query(
-                  "Delete from employee where ?",
-                 ({
-                    id: answer.delete_employee_id
-                  }),
+                  'Delete from employee where first_name = ? and last_name = ?',
+                  [answer.delete_employee_first, answer.delete_employee_last],  
                   function(err, res) {
                     if (err) throw err;
                     console.table([res]);
@@ -337,30 +329,23 @@ connection.connect(function(err) {
 
     function updateEmployeeRole() {
         inquirer.prompt([  
+          {
+            type: 'input',
+            name: 'employee_update', 
+            message: 'Please enter the employee id whose role you want to update.'
+         },
             {
                 type: 'input',
                 name: 'employee_role_update', 
                 message: 'Please enter the updated role id for the employee.'
-             },     
-            {
-                type: 'input',
-                name: 'employee_update', 
-                message: 'Please enter the employee id whose role you want to update.'
-             },
-          ])
+             }    
+         ])
              .then(function(answer) {
                 // when finished prompting, insert a new item into the db with that info
                 connection.query(
-                  "UPDATE employee SET ? WHERE  ?",
-                  ([
-                    {
-                    role_id: answer.employee_role_update
-                    },
-                    {
-                    id: answer.employee_udpate,
-                    },
-                  ]),
-                  function(err, res) {
+                  'Update employee set role_id = ? where id = ?',
+                  [answer.employee_role_update, answer.employee_update],  
+                function(err, res) {
                     if (err) throw err;
                     console.table(res);
                     viewEmployees();
@@ -369,65 +354,131 @@ connection.connect(function(err) {
               })
            }
 
-           function viewDepartmentBudget() {
-            inquirer.prompt([       
+           function updateEmployeeVicePresident() {
+            inquirer.prompt([  
+              {
+                type: 'input',
+                name: 'employee_vp_update', 
+                message: 'Please enter the id of the employee whose Vice President you want to update.'
+             },
                 {
                     type: 'input',
-                    name: 'department_budget', 
-                    message: 'Please enter the department whose budget you want to view.'
-                 }
-                ])
+                    name: 'vp_update', 
+                    message: 'Please enter the id of the updated Vice President for the employee.'
+                 }    
+             ])
                  .then(function(answer) {
                     // when finished prompting, insert a new item into the db with that info
                     connection.query(
-                      "select sum(salary) from role ? where ?",
-                      ({
-                        salary: answer.department_budget,
-                        }),
-                    function(err) {
+                      'Update employee set manager_id = ? where id = ?',
+                      [answer.vp_update, answer.employee_vp_update],  
+                    function(err, res) {
                         if (err) throw err;
-                        console.log("Your employee was updated successfully!");
-                        viewDepartment();
+                        console.table(res);
+                        viewEmployees();
                         start();
                       });
                   })
                }
 
-           function viewDepartments() {
-            console.log("Selecting all departments...\n");
-            connection.query("SELECT * FROM department", function(err, res) {
-              if (err) throw err;
-              // Log all results of the SELECT statement
-              console.table(res);
-              start();
-            });
-          }
-
-          function viewEmployees() {
-            console.log("Selecting all employees...\n");
-            connection.query("SELECT * FROM employee", function(err, res) {
-              if (err) throw err;
-              // Log all results of the SELECT statement
-              console.table(res);
-              start();
-            });
-          }
-
-          function viewEmployeesByVP() {
+           function viewDepartmentBudget() {
             inquirer.prompt([       
                 {
                     type: 'input',
+                    name: 'department_budget', 
+                    message: 'Please enter the department id whose budget you want to view.'
+                 }
+                ])
+                .then(function(answer) {
+                  var query = "SELECT sum(salary) ";
+                  query += "FROM role INNER JOIN employee ON (employee.role_id = role.role_id AND employee.department_id ";
+                  query += "= role.department_id) WHERE (role.salary = ? )";
+            
+                  connection.query(query, {salary: answer.department.budget}, function(err, res) {
+                    console.log("Here is your department budget!");
+                    for (var i = 0; i < res.length; i++) {
+                      console.log(
+                        i+1 + ".) " +
+                          "Department: " +
+                          res[i].department_name +
+                          " Budget: " +
+                          res[i].salary 
+                          );
+                    }
+                          start();
+                      });
+                  })
+               }
+
+               function viewDepartments() {
+                console.log("Selecting all departments...\n");
+                connection.query("SELECT * FROM department", function(err, res) {
+                  if (err) throw err;
+                  // Log all results of the SELECT statement
+                  console.table(res);
+                  start();
+                });
+              }
+
+          function viewEmployees() {
+            console.log("Selecting all employees...\n");
+            connection.query("SELECT employee.first_name, employee.last_name, role.role, role.salary, department.department_name, employee.manager_id from role inner join employee on employee.role_id = role.role_id inner join department on department.department_id = role.department_id order by employee.first_name", function(err, res) {
+              if (err) throw err;
+              // Log all results of the SELECT statement
+              console.table(res);
+              start();
+            });
+          }
+
+          function viewEmployeesByDepartment() {
+            inquirer.prompt([  
+              {
+                type: 'list',
+                name: 'employee_department_view', 
+                message: 'Please enter the department you want to view.', 
+                choices: [
+                  'Administration',
+                  'Art & Editorial',
+                  'Executive',
+                  'Human Resources',
+                  'IT',
+                  'Marketing',
+                  'Sales',
+                  'Software'
+                ]
+             }    
+             ])
+             .then(function(answer) {
+            console.log("Selecting department...\n");
+            connection.query(
+              "SELECT employee.first_name, employee.last_name, role.role, role.salary, department.department_name from role inner join employee on employee.role_id = role.role_id inner join department on department.department_id = role.department_id where department_name = ?",
+            [answer.employee_department_view],  
+            function(err, res) {
+                if (err) throw err;
+                console.table(res);
+                //viewDepartments();
+                start();
+              });
+            })
+          }
+         
+          function viewEmployeesByVP() {
+            inquirer.prompt([       
+                {
+                    type: 'list',
                     name: 'employee_vp', 
-                    message: 'Please enter the name of the Vice President you want to view.'
+                    message: 'Please choose the Vice President you want to view, where Julie Schaub = 1 and Troy Batson = 2.',
+                    choices: [
+                      '1',
+                      '2'
+                    ]
                  },
                 ])
                  .then(function(answer) {
                      console.log("Selecting chosen Vice President")
                    connection.query(
-                    "select * from employee where ?" ,
-                     ({
-                        manager_name: answer.employee_vp
-                      }),
+                    "select * from employee where manager_id = ?",
+                      [answer.employee_vp],
                       function(err, res) {
                         if (err) throw err;
                         console.table(res);
